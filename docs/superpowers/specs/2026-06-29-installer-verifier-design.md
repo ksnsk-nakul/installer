@@ -3,7 +3,7 @@
 
 ## Overview
 
-A Python-based CLI tool (with optional web dashboard) that transforms a bare server — Ubuntu, Docker, or Windows — into a fully configured, running web application. Supports Laravel, MERN/MEAN/MEVN, Python (Django/FastAPI/Flask), and Java (Spring Boot) projects across multiple projects and folders.
+A Python-based CLI tool with a built-in web dashboard that transforms a bare server — Ubuntu, Docker, or Windows — into a fully configured, running web application. The web dashboard uses an app store–style UI (Explore / Installed / Verify / Updates / Clone) for managing all applications on a server. Supports Laravel, MERN/MEAN/MEVN, Python (Django/FastAPI/Flask), and Java (Spring Boot) projects across multiple projects and folders.
 
 Two entry points exist: a bootstrap script that runs on the server itself, and a local CLI that provisions a remote server over SSH. Both converge on the same 5-step execution engine.
 
@@ -230,18 +230,43 @@ projects:
 
 ## Web Dashboard
 
-An optional FastAPI app served on port 8080, launched via `installer dashboard` or automatically during install when `--ui` flag is passed.
+A FastAPI app served on port 8080, launched via `installer dashboard` or automatically during install when `--ui` flag is passed. The UI follows an **app store pattern** — five sections in a persistent left sidebar, a search bar, and a content pane that updates without page reload.
 
-**Features:**
-- Real-time install log streaming (WebSocket)
-- Step progress indicator (Steps 1–5)
-- **Database configuration dialog** (Step 3 interactive pause)
-  - Option A/B/C selection
-  - Connection parameter form
-  - Backup file upload
-  - Live connection test result
-- Deployment report view
-- Project/manifest browser
+### Navigation sections
+
+#### Explore
+Browse all available stack presets as cards. Each card shows the stack icon, name, tag row (runtime badges), and key tools. Filters across the top narrow by runtime (PHP, Node.js, Python, Java, Docker). A "+ Custom stack" card opens the manual `installer init` wizard.
+
+Presets available: MERN, MEAN, MEVN, Laravel+React, Laravel+Vue, Laravel+Blade, Django+React, Spring Boot, and any user-defined entries in `manifest.yaml`.
+
+#### Installed
+Lists every app installed on the currently connected server. Each row shows: app name + stack, install path, runtime versions, a live status dot (running / degraded / stopped), and per-app action buttons — **Update**, **Clone**, and **Verify** (highlighted on degraded apps).
+
+#### Verify
+Select an installed app from a dropdown and run verification. Displays two check groups:
+
+- **System checks** — services running, ports open, SSL certificate expiry, DB connectivity, queue/worker process
+- **API health check** — HTTP call to the configured `verify_api.url`, response status, JSON field assertion
+
+Each check shows pass / warn / fail with a detail value. A summary badge row at the bottom counts totals. Failed checks link to a suggested fix command.
+
+#### Updates
+Shows apps with available runtime or dependency upgrades. Each update row shows current → target version, a changelog button, and an individual **Update** button. Security updates are flagged with a red badge. An **Update all** button at the top triggers a batch upgrade. Apps already up to date are shown below in a dimmed section.
+
+#### Clone
+Duplicates an existing installation to a new folder or a different server. Fields:
+- Source app (dropdown of installed apps)
+- Target folder (text input, e.g. `/var/www/myapp-staging`)
+- Target server (same server or select from manifest, or add new)
+- Database mode: clone with empty DB, copy database, or configure external
+
+A warning banner reminds the user to review `.env` credentials before starting. Cloning reuses the source `installer.yaml` with the target path and DB overrides applied.
+
+### Always-present elements
+
+- **Server indicator** at the bottom of the sidebar shows the connected server IP and live status dot
+- **Real-time log panel** slides up during any active install, update, clone, or verify operation — WebSocket-streamed, with step progress indicator (Steps 1–5)
+- **Deployment report** accessible after every install or update run
 
 ---
 
@@ -290,10 +315,18 @@ installer/
 │   │   ├── api_check.py        # Step 3 + Step 5 HTTP API probe
 │   │   └── system_check.py     # ports, services, DB conn, SSL
 │   └── web/
-│       ├── server.py           # FastAPI app
+│       ├── server.py           # FastAPI app + route registration
 │       ├── ws.py               # WebSocket log streaming
 │       ├── static/
+│       │   ├── app.js          # SPA nav, section switching
+│       │   └── style.css
 │       └── templates/
+│           ├── base.html       # Shell: sidebar + topbar + content pane
+│           ├── explore.html    # Preset card grid + runtime filters
+│           ├── installed.html  # Installed app rows + status dots
+│           ├── verify.html     # Check groups + pass/warn/fail rows
+│           ├── updates.html    # Update rows + batch update
+│           ├── clone.html      # Clone form + warning banner
 │           └── db_config.html  # Step 3 DB interactive dialog
 ├── bootstrap.sh                # curl | bash entry point
 ├── pyproject.toml
