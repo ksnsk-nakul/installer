@@ -1,0 +1,13 @@
+projects:
+  - name: myapp
+    config: /path/to/myapp/installer.yaml
+    servers:
+      - host: 192.168.1.10
+        user: ubuntu
+        key: ~/.ssh/id_rsa
+  - name: blog
+    config: /path/to/blog/installer.yaml
+    servers:
+      - host: 192.168.1.20
+        user: root
+        password_env: BLOG_SERVER_PASS
