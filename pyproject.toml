@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "installer-tool"
+version = "0.1.0"
+description = "Installer/verifier tool for deploying web apps to Ubuntu, Docker, and Windows servers"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1",
+    "paramiko>=3.4",
+    "docker>=7.0",
+    "pywinrm>=0.4",
+    "httpx>=0.27",
+    "pydantic>=2.7",
+    "rich>=13.7",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "fastapi>=0.111",
+    "uvicorn[standard]>=0.29",
+    "websockets>=12.0",
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "pytest-mock>=3.14",
+]
+
+[project.scripts]
+installer = "installer.cli:cli"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["installer*"]

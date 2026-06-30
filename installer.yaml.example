@@ -1,0 +1,42 @@
+# Minimal example — preset expands automatically
+preset: MERN
+project_path: /var/www/myapp
+domain: myapp.com
+env_file: .env.production
+
+# Override specific layers
+database:
+  engine: postgresql
+  mode: external          # local | external
+  version: "16"
+  db_name: myapp_db
+  host: db.example.com
+  port: 5432
+  user: myapp_user
+  backup_url: https://storage.example.com/backup.sql.gz
+
+backend:
+  framework: laravel
+  php_version: "8.2"
+  queue: true
+  scheduler: true
+
+frontend:
+  framework: react
+  build_tool: vite
+  output_dir: dist
+
+verify_api:
+  url: "http://localhost:8000/api/health"
+  method: GET
+  expect_status: 200
+  expect_json:
+    status: ok
+  timeout: 30s
+  retries: 3
+
+monitoring:
+  enabled: false
+  ping_url: https://uptime.example.com/api/push/abc123
+  log_rotation: true
+  alert_webhook: https://hooks.slack.com/...
