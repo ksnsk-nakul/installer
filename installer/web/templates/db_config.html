@@ -1,0 +1,81 @@
+<h2 class="modal-title">Database Configuration</h2>
+<p class="modal-subtitle">Choose how to configure the database for this deployment.</p>
+
+<form id="db-config-form">
+  <div class="form-group">
+    <label>
+      <input type="radio" name="db-mode" value="local" checked>
+      Install locally on the server
+    </label>
+    <label>
+      <input type="radio" name="db-mode" value="external">
+      Connect to existing external database
+    </label>
+  </div>
+
+  <div id="db-external-fields" style="display:none">
+    <div class="form-group">
+      <label for="db-host">Host</label>
+      <input type="text" id="db-host" class="input" placeholder="db.example.com">
+    </div>
+    <div class="form-group">
+      <label for="db-port">Port</label>
+      <input type="number" id="db-port" class="input" placeholder="3306">
+    </div>
+    <div class="form-group">
+      <label for="db-name">Database Name</label>
+      <input type="text" id="db-name" class="input" placeholder="myapp">
+    </div>
+    <div class="form-group">
+      <label for="db-user">Username</label>
+      <input type="text" id="db-user" class="input" placeholder="dbuser">
+    </div>
+    <div class="form-group">
+      <label for="db-pass">Password</label>
+      <input type="password" id="db-pass" class="input">
+    </div>
+  </div>
+
+  <div class="modal-actions">
+    <button type="button" class="btn btn-outline" onclick="closeDbModal()">Cancel</button>
+    <button type="submit" class="btn btn-primary">Continue</button>
+  </div>
+</form>
+
+<script>
+document.querySelectorAll('input[name="db-mode"]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.getElementById('db-external-fields').style.display =
+      r.value === 'external' && r.checked ? '' : 'none';
+  });
+});
+
+document.getElementById('db-config-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const mode = document.querySelector('input[name="db-mode"]:checked').value;
+  const payload = { mode };
+
+  if (mode === 'external') {
+    payload.host = document.getElementById('db-host').value.trim();
+    payload.port = parseInt(document.getElementById('db-port').value, 10) || null;
+    payload.database = document.getElementById('db-name').value.trim();
+    payload.username = document.getElementById('db-user').value.trim();
+    payload.password = document.getElementById('db-pass').value;
+  }
+
+  const jobId = window._activeJobId;
+  if (jobId) {
+    await fetch(`/api/install/${encodeURIComponent(jobId)}/db-config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  }
+
+  closeDbModal();
+});
+
+function closeDbModal() {
+  document.getElementById('db-modal').style.display = 'none';
+}
+</script>

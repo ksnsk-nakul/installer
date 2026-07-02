@@ -92,7 +92,8 @@ def test_verify_runs_checks(tmp_path):
 # dashboard
 # ---------------------------------------------------------------------------
 
-def test_dashboard_shows_port():
+def test_dashboard_shows_port(mocker):
+    mocker.patch("uvicorn.run")
     runner = CliRunner()
     result = runner.invoke(cli, ["dashboard", "--port", "9090"])
     assert result.exit_code == 0

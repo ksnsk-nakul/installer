@@ -1,0 +1,100 @@
+<section class="section-header">
+  <h1>Verify</h1>
+</section>
+
+<div class="verify-controls">
+  <select id="verify-select" class="select">
+    <option value="">— Select a project —</option>
+  </select>
+  <button class="btn btn-primary" onclick="runVerify()">Run Checks</button>
+</div>
+
+<div id="verify-results" class="verify-results"></div>
+
+<script>
+(async () => {
+  const sel = document.getElementById('verify-select');
+  const resp = await fetch('/api/projects');
+  const { projects } = await resp.json();
+  for (const p of projects) {
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  }
+})();
+
+async function runVerify() {
+  const name = document.getElementById('verify-select').value;
+  if (!name) { alert('Select a project first.'); return; }
+
+  const panel = document.getElementById('verify-results');
+  panel.textContent = 'Running checks…';
+
+  const resp = await fetch(`/api/verify/${encodeURIComponent(name)}`, { method: 'POST' });
+  const data = await resp.json();
+
+  panel.textContent = '';
+
+  function makeGroup(title, checks) {
+    const group = document.createElement('div');
+    group.className = 'check-group';
+
+    const h = document.createElement('h3');
+    h.textContent = title;
+    group.appendChild(h);
+
+    if (!checks.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = 'No checks configured.';
+      group.appendChild(empty);
+      return group;
+    }
+
+    for (const c of checks) {
+      const row = document.createElement('div');
+      row.className = `check-row check-${c.status}`;
+
+      const badge = document.createElement('span');
+      badge.className = `check-badge badge-${c.status}`;
+      badge.textContent = c.status.toUpperCase();
+
+      const label = document.createElement('span');
+      label.className = 'check-label';
+      label.textContent = c.name;
+
+      const detail = document.createElement('span');
+      detail.className = 'check-detail';
+      detail.textContent = c.detail || '';
+
+      row.append(badge, label, detail);
+
+      if (c.fix_hint && c.status === 'fail') {
+        const fix = document.createElement('code');
+        fix.className = 'fix-hint';
+        fix.textContent = c.fix_hint;
+        row.appendChild(fix);
+      }
+
+      group.appendChild(row);
+    }
+    return group;
+  }
+
+  panel.appendChild(makeGroup('System Checks', data.system_checks || []));
+  panel.appendChild(makeGroup('API Health', data.api_checks || []));
+
+  const summary = data.summary || {};
+  const bar = document.createElement('div');
+  bar.className = 'summary-bar';
+
+  ['pass','warn','fail'].forEach(s => {
+    const badge = document.createElement('span');
+    badge.className = `summary-badge badge-${s}`;
+    badge.textContent = `${s}: ${summary[s] || 0}`;
+    bar.appendChild(badge);
+  });
+  panel.appendChild(bar);
+}
+</script>
