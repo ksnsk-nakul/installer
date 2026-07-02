@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from installer.web.api import projects, install, verify, clone, updates
+from installer.web import ws
 
 _HERE = Path(__file__).parent
 
@@ -25,6 +26,7 @@ app.include_router(install.router, prefix="/api")
 app.include_router(verify.router, prefix="/api")
 app.include_router(clone.router, prefix="/api")
 app.include_router(updates.router, prefix="/api")
+app.include_router(ws.router)
 
 
 @app.get("/", response_class=HTMLResponse)
