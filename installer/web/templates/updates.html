@@ -1,0 +1,75 @@
+<section class="section-header">
+  <h1>Updates</h1>
+  <button class="btn btn-outline" onclick="loadUpdates()">↻ Refresh</button>
+</section>
+
+<div id="updates-list"></div>
+
+<script>
+async function loadUpdates() {
+  const list = document.getElementById('updates-list');
+  list.textContent = 'Checking for updates…';
+
+  const resp = await fetch('/api/updates');
+  const { updates } = await resp.json();
+
+  list.textContent = '';
+
+  if (!updates.length) {
+    const msg = document.createElement('p');
+    msg.className = 'muted';
+    msg.textContent = 'All projects are up to date.';
+    list.appendChild(msg);
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'data-table';
+
+  const thead = document.createElement('thead');
+  const hr = document.createElement('tr');
+  ['Project', 'Current', 'Available', 'Action'].forEach(h => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  for (const u of updates) {
+    const tr = document.createElement('tr');
+
+    const tdName = document.createElement('td');
+    tdName.textContent = u.name;
+
+    const tdCurrent = document.createElement('td');
+    tdCurrent.className = 'mono';
+    tdCurrent.textContent = u.current_version || '—';
+
+    const tdAvail = document.createElement('td');
+    tdAvail.className = 'mono';
+    tdAvail.textContent = u.available_version || '—';
+
+    const tdAction = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-sm btn-primary';
+    btn.textContent = 'Update';
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      btn.textContent = 'Queued…';
+      await fetch(`/api/updates/${encodeURIComponent(u.name)}`, { method: 'POST' });
+      btn.textContent = 'Queued';
+    });
+    tdAction.appendChild(btn);
+
+    tr.append(tdName, tdCurrent, tdAvail, tdAction);
+    tbody.appendChild(tr);
+  }
+
+  table.appendChild(tbody);
+  list.appendChild(table);
+}
+
+loadUpdates();
+</script>

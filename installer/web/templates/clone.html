@@ -1,0 +1,74 @@
+<section class="section-header">
+  <h1>Clone Project</h1>
+</section>
+
+<div class="form-card">
+  <div class="form-group">
+    <label for="clone-source">Source Project</label>
+    <select id="clone-source" class="select">
+      <option value="">— Select project to clone —</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="clone-name">New Project Name</label>
+    <input type="text" id="clone-name" class="input" placeholder="my-project-copy">
+  </div>
+
+  <div class="form-group">
+    <label for="clone-path">Target Path</label>
+    <input type="text" id="clone-path" class="input" placeholder="/var/www/my-project-copy">
+  </div>
+
+  <div class="form-group">
+    <label for="clone-host">Target Server (leave blank for same)</label>
+    <input type="text" id="clone-host" class="input" placeholder="192.168.1.10">
+  </div>
+
+  <button class="btn btn-primary" onclick="runClone()">Clone</button>
+</div>
+
+<div id="clone-status"></div>
+
+<script>
+(async () => {
+  const sel = document.getElementById('clone-source');
+  const resp = await fetch('/api/projects');
+  const { projects } = await resp.json();
+  for (const p of projects) {
+    const opt = document.createElement('option');
+    opt.value = p.name;
+    opt.textContent = p.name;
+    sel.appendChild(opt);
+  }
+})();
+
+async function runClone() {
+  const source = document.getElementById('clone-source').value;
+  const name   = document.getElementById('clone-name').value.trim();
+  const path   = document.getElementById('clone-path').value.trim();
+  const host   = document.getElementById('clone-host').value.trim();
+
+  if (!source || !name || !path) {
+    alert('Source, new name and target path are required.');
+    return;
+  }
+
+  const status = document.getElementById('clone-status');
+  status.textContent = 'Cloning…';
+
+  const resp = await fetch('/api/clone', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source, name, path, host: host || null }),
+  });
+
+  const data = await resp.json();
+  status.textContent = '';
+
+  const msg = document.createElement('div');
+  msg.className = resp.ok ? 'alert alert-success' : 'alert alert-error';
+  msg.textContent = data.message || (resp.ok ? 'Clone queued.' : 'Clone failed.');
+  status.appendChild(msg);
+}
+</script>

@@ -231,11 +231,21 @@ def deploy(config, host, user, key):
 
 
 @cli.command()
-@click.option("--port", default=8080, help="Port to run the dashboard on", show_default=True)
-def dashboard(port):
-    """Launch the web UI dashboard on the given port."""
-    console.print(f"[bold]Dashboard:[/bold] starting on http://0.0.0.0:{port}")
-    console.print("[dim]Web dashboard not yet implemented — coming in Plan 2.[/dim]")
+@click.option("--host", default="0.0.0.0", show_default=True)
+@click.option("--port", default=8080, show_default=True)
+@click.option("--reload", is_flag=True, default=False, help="Auto-reload on code changes")
+def dashboard(host, port, reload):
+    """Launch the web UI dashboard."""
+    import uvicorn
+
+    console.print(f"[bold]Dashboard:[/bold] http://{host}:{port}")
+    uvicorn.run(
+        "installer.web.server:app",
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+    )
 
 
 @cli.command(name="list")
